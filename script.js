@@ -1,52 +1,61 @@
-var Curl = require( 'node-libcurl' ).Curl;
-var time_interval = 100;
-var colors = require('colors');
+const Curl = require( 'node-libcurl' ).Curl;
+const time_interval = process.env.BENCH_INTERVAL || 1000;
+const colors = require('colors');
 
-var url = 'www.google.com';
-var ok = 0;
-var fail = 0;
-var total = 0;
-var t_ping = 0;
+let count = 0;
+let fail = 0;
+let ok = 0;
+let t_ping = 0;
+
+const runs = 0;
 
 console.log('working...')
 
-setInterval(function() {
-    var curl = new Curl();
+setInterval(function run() {
+  const curl = new Curl();
 
-    curl.setOpt( 'URL', url);
+  curl.setOpt('URL', generateUrl());
 
-    curl.on( 'error', curl.close.bind( curl ) );
+  curl.on('error', curl.close.bind(curl));
 
-    curl.on( 'end', function( statusCode, body, headers ) {        
-        total++;
-        if(statusCode && ((statusCode===200) || (statusCode===301))) ok++;
-               
-        if((statusCode!==200) && (statusCode!=301))fail++;
+  curl.on('end', function( code, body, headers) {
+    count++;
+    if(code && ((code===200) || (code===301)) || code===302) ok++;
 
-        var post = new Date();
-        var time = (post.getTime()) - pre.getTime() ;
+    if((code!==200) && (code!==301) && (code!==302)) fail ++;
 
-        t_ping+= time;
-        var payload = '200 or 301: ' + ok + '  -   !200:' + fail + ' - time: ' + time; 
-        
+    const post = new Date();
+    const time = (post.getTime()) - pre.getTime() ;
 
-        if (time>2000) return console.log(payload.red);
-        if (time>1000) return console.log(payload.yellow);
+    t_ping += time;
+    const payload = `200 or 301: ${ok}  -   !200: ${fail} - time: ${time}`;
 
-        console.log(payload.grey);
-        
-        this.close();
-    });
+    if (time>2000) return console.log(payload.red);
+    if (time>1000) return console.log(payload.yellow);
 
-    var pre = new Date();
-    curl.perform();
+    console.log(payload.grey);
+
+    this.close();
+  });
+
+  const pre = new Date();
+  curl.perform();
 }, time_interval);
 
-process.on('SIGINT', function() {
-    console.log('-------------------------------');
-    console.log('FINISHED: ');  
-    console.log('total requests: ', total);
-    console.log('200: ',ok,'   -   !200:', fail, ' - time average: ', t_ping/total);
-    
-    process.exit();
-})
+function finish() {
+  console.log('-------------------------------');
+  console.log(`FINISHED: `);
+  console.log(`Total requests: ${count}`);
+  console.log(`Request interval: ${time_interval}ms`)
+  console.log(`Avg. reqs/sec: ${count / time_interval * 1000}`)
+  console.log(`OK: ${ok}   -   Failed: ${fail} - Avg. response time: ${t_ping/count}`);
+
+  process.exit();
+};
+
+process.on('SIGINT', finish);
+
+function generateUrl() {
+  // set your custom URL generation logic here
+  return process.env.BENCH_URL || `https://ekoparty.org`;
+};
