@@ -43,7 +43,7 @@ setInterval(function run() {
 }, time_interval);
 
 function finish() {
-  console.log('-------------------------------');
+  console.log(`-------------------------------`);
   console.log(`FINISHED: `);
   console.log(`Total requests: ${count}`);
   console.log(`Request interval: ${time_interval}ms`)
@@ -55,7 +55,8 @@ function finish() {
 
 process.on('SIGINT', finish);
 
+
 function generateUrl() {
   // set your custom URL generation logic here
-  return process.env.BENCH_URL || `https://ekoparty.org`;
+  return process.env.BENCH_URL || `http://www.ekoparty.org`;
 };
